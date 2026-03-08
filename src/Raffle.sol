@@ -22,6 +22,7 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.19;
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
  * @title A lottery contract
@@ -43,7 +44,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /* events */
     event RaffleEntered(address player);
 
-    constructor(uint256 _entranceFee, uint256 _interval) {
+    constructor(
+        uint256 _entranceFee,
+        uint256 _interval,
+        address _vrfCoordinator
+    ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_entranceFee = _entranceFee;
         i_interval = _interval;
         s_lastTimeStamp = block.timestamp;
@@ -63,8 +68,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_lastTimeStamp) > i_interval) {
             revert();
         }
-        requestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
+        VRFV2PlusClient.RandomWordsRequest request = VRFV2PlusClient
+            .RandomWordsRequest({
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
                 requestConfirmations: requestConfirmations,
@@ -74,8 +79,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
                     // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
                     VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
                 )
-            })
-        );
+            });
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
     /** Getter function */
