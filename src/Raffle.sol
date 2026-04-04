@@ -35,6 +35,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * errors
      */
     error Raffle__senMoreEthTOEnterRaffle();
+    error Raffle__TransferFailed();
 
     /**
      * Variables
@@ -46,6 +47,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     bytes32 private immutable i_keyHash;
     uint256 private immutable i_subscriptionId;
     address payable[] private s_players;
+    address private s_recentWinner;
     //@dev - thie after which the lottery will pick a winner (in seconds)
     uint256 immutable i_interval;
     uint256 private s_lastTimeStamp;
@@ -83,21 +85,33 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_lastTimeStamp) > i_interval) {
             revert();
         }
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: i_keyHash,
-            subId: i_subscriptionId,
-            requestConfirmations: REQUEST_CONFIRMATIONS,
-            callbackGasLimit: i_callbackGasLimit,
-            numWords: NUMWORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(
-                // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-            )
-        });
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
+            .RandomWordsRequest({
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUMWORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            });
         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {}
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] calldata randomWords
+    ) internal override {
+        uint256 indexOfTheWinner = randomWords[0] % s_players.length;
+        address payable recentWinner = s_players[indexOfTheWinner];
+        s_recentWinner = recentWinner;
+        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
+    }
 
     /**
      * Getter function
