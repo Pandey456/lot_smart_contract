@@ -94,8 +94,29 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEntered(msg.sender);
     }
 
-    function pickWinner() external {
-        if ((block.timestamp - s_lastTimeStamp) > i_interval) {
+    /**
+     * @dev This functions checks ,
+     * if the time interval is passed ,
+     *  if the contract has good eth ,
+     * if there are player,
+     * id raffle open
+     */
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+        bool isIntervalPassed = (block.timestamp - s_lastTimeStamp) >=
+            i_interval;
+        bool isEth = address(this).balance > 0;
+        bool isPlayers = s_players.length > 0;
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        upkeepNeeded = isIntervalPassed && isEth && isPlayers && isOpen;
+        return (upkeepNeeded, "");
+    }
+
+    //function pickWinner() external {
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
             revert();
         }
 
@@ -125,11 +146,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_players = new address payable[](0);
         s_lastTimeStamp = block.timestamp;
         s_raffleState = RaffleState.OPEN;
+        emit RaffleWinner(s_recentWinner);
+
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
-        emit RaffleWinner(s_recentWinner);
     }
 
     /**
