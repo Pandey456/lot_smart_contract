@@ -37,6 +37,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__senMoreEthTOEnterRaffle();
     error Raffle__TransferFailed();
     error Raffle__raffleIsClosed();
+    error Raffle__upkeepNotNeeded(
+        address balance,
+        uint256 playerLength,
+        uint256 raffleState
+    );
 
     /* Type declarations*/
     enum RaffleState {
@@ -117,7 +122,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function performUpkeep(bytes calldata /* performData */) external {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
-            revert();
+            revert Raffle__upkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
         }
 
         s_raffleState = RaffleState.FindingWinner;
