@@ -38,7 +38,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__TransferFailed();
     error Raffle__raffleIsClosed();
     error Raffle__upkeepNotNeeded(
-        address balance,
+        uint256 balance,
         uint256 playerLength,
         uint256 raffleState
     );
@@ -168,5 +168,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
      */
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
     }
 }
