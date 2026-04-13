@@ -34,7 +34,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /**
      * errors
      */
-    error Raffle__senMoreEthTOEnterRaffle();
+    error Raffle__sendMoreEthTOEnterRaffle();
     error Raffle__TransferFailed();
     error Raffle__raffleIsClosed();
     error Raffle__upkeepNotNeeded(
@@ -90,7 +90,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // require(msg.value >= i_entranceFee,"not enough ETH to send"); --> this will require more gas
         // as it has to store this string "not enough ETH to send", so we will use revert
         if (msg.value < i_entranceFee) {
-            revert Raffle__senMoreEthTOEnterRaffle();
+            revert Raffle__sendMoreEthTOEnterRaffle();
         }
         if (s_raffleState != RaffleState.OPEN) {
             revert Raffle__raffleIsClosed();
@@ -172,5 +172,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getRaffleState() external view returns (RaffleState) {
         return s_raffleState;
+    }
+
+    function getPlayerAddress(
+        uint256 indexOfPlayer
+    ) external view returns (address) {
+        return s_players[indexOfPlayer];
     }
 }
