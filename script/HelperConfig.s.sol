@@ -66,6 +66,7 @@ contract HelperConfig is Script, codeConstant {
             MOCK_BASE_FEE,
             MOCK_GAS_PRICE_LINK
         );
+
         localnetworkConfig = NetworkConfig({
             entranceFee: 0.01 ether,
             interval: 30,
