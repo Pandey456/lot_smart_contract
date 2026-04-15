@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 import {Script} from "../lib/forge-std/src/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "../script/HelperConfig.s.sol";
+import {CreateSubscriptionID} from "./Interactions.s.sol";
 
 contract DeployRaffle is Script {
     Raffle public raffle;
@@ -12,6 +13,12 @@ contract DeployRaffle is Script {
     function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
+        if (config.subscriptionId == 0) {
+            //we need subID
+            CreateSubscriptionID createSubscription = new CreateSubscriptionID();
+            (config.subscriptionId, config.vrfCoordinator) = createSubscription
+                .createSubscriptionID(config.vrfCoordinator);
+        }
         vm.startBroadcast();
         raffle = new Raffle(
             config.entranceFee,
