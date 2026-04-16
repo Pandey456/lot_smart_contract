@@ -27,3 +27,7 @@ contract CreateSubscriptionID is Script {
         createSubscriptionusingConfig();
     }
 }
+
+contract fundSubscription {
+    function run() public {}
+}
