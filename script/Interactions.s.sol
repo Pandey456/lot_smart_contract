@@ -29,5 +29,11 @@ contract CreateSubscriptionID is Script {
 }
 
 contract fundSubscription {
+    function fundSubscriptionUsingConfig() public {
+        HelperConfig helperConfig = new HelperConfig();
+        address cordinator = helperConfig.getConfig().vrfCoordinator;
+        uint256 subscriptionID = helperConfig.getConfig().subscriptionId;
+    }
+
     function run() public {}
 }
